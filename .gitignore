@@ -1,0 +1,23 @@
+cat <<EOF > .gitignore
+# Python
+__pycache__/
+*.pyc
+.venv/
+.env
+
+# Logs
+*.log
+spark-logs/
+airflow/logs/
+
+# Data and checkpoints
+checkpoints/
+data/
+*.csv
+*.parquet
+
+# IDE
+.vscode/
+.idea/
+.DS_Store
+EOF
