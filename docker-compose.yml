@@ -33,7 +33,7 @@ services:
       retries: 5
     networks:
       - datamasterylab
-  
+
   broker:
     image: confluentinc/cp-server:7.4.0
     container_name: broker
@@ -90,27 +90,126 @@ services:
     hostname: spark-master
     volumes:
       - ./jobs:/opt/bitnami/spark/jobs
-    command: bin/spark-class org.apache.spark.deploy.master.Master 
+    command: bin/spark-class org.apache.spark.deploy.master.Master
     environment:
       SPARK_MODE: master
     ports:
       - "7077:7077"
-      - "8080:8080"
+      - "8090:8080"
     networks:
       - datamasterylab
 
   spark-worker-1:
-    <<: *spark-common
+    image: bitnami/spark:3.5.0
     container_name: spark-worker-1
+    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      SPARK_MODE: worker
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_MEMORY: 1g
+      SPARK_MASTER_URL: spark://spark-master:7077
+    volumes:
+      - ./jobs:/opt/bitnami/spark/jobs
+      - ./spark-logs:/opt/bitnami/spark/logs
+    depends_on:
+      - spark-master
     ports:
       - "8081:8081"
+    networks:
+      - datamasterylab
 
   spark-worker-2:
-    <<: *spark-common
+    image: bitnami/spark:3.5.0
     container_name: spark-worker-2
+    command: bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+    environment:
+      SPARK_MODE: worker
+      SPARK_WORKER_CORES: 2
+      SPARK_WORKER_MEMORY: 1g
+      SPARK_MASTER_URL: spark://spark-master:7077
+    volumes:
+      - ./jobs:/opt/bitnami/spark/jobs
+      - ./spark-logs:/opt/bitnami/spark/logs
+    depends_on:
+      - spark-master
     ports:
       - "8082:8082"
+    networks:
+      - datamasterylab
+
+  postgres:
+    image: postgres:13
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - datamasterylab
+
+  airflow-init:
+    image: apache/airflow:2.9.0
+    container_name: airflow-init
+    command: bash -c "airflow db init && airflow users create --username admin --password admin --firstname Air --lastname Flow --role Admin --email dangvanvy112@gmail.com"
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+    networks:
+      - datamasterylab
+
+  airflow-webserver:
+    image: apache/airflow:2.9.0
+    container_name: airflow-webserver
+    restart: always
+    depends_on:
+      - airflow-init
+    ports:
+      - "8080:8080"
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AWS_ACCESS_KEY_ID=xxx
+      - AWS_SECRET_ACCESS_KEY=yyy
+      - AWS_DEFAULT_REGION=ap-southeast-2
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: webserver
+    networks:
+      - datamasterylab
+
+  airflow-scheduler:
+    image: apache/airflow:2.9.0
+    container_name: airflow-scheduler
+    restart: always
+    depends_on:
+      - airflow-init
+    environment:
+      - AIRFLOW__CORE__EXECUTOR=LocalExecutor
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@postgres:5432/airflow
+      - AWS_ACCESS_KEY_ID=xxx
+      - AWS_SECRET_ACCESS_KEY=yyy
+      - AWS_DEFAULT_REGION=ap-southeast-2
+    volumes:
+      - ./airflow/dags:/opt/airflow/dags
+      - ./airflow/logs:/opt/airflow/logs
+      - ./airflow/plugins:/opt/airflow/plugins
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: scheduler
+    networks:
+      - datamasterylab
+
+volumes:
+  postgres_data:
 
 networks:
   datamasterylab:
+    external: true
     driver: bridge

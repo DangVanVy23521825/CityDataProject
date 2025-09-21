@@ -4,7 +4,10 @@ vehicleSchema = StructType([
     StructField("id", StringType(), True),
     StructField("vehicle_id", StringType(), True),
     StructField("timestamp", TimestampType(), True),
-    StructField("location", StringType(), True),
+    StructField("location", StructType([
+        StructField("latitude", DoubleType(), True),
+        StructField("longitude", DoubleType(), True),
+    ]), True),
     StructField("speed_kmh", DoubleType(), True),
     StructField("direction", StringType(), True),
     StructField("bearing_deg", DoubleType(), True),
@@ -32,7 +35,10 @@ trafficSchema = StructType([
         StructField("longitude", DoubleType(), True),
     ]), True),
     StructField("timestamp", TimestampType(), True),
-    StructField("snapshot", StringType(), True),
+    StructField("currentSpeed", DoubleType(), True),
+    StructField("freeFlowSpeed", DoubleType(), True),
+    StructField("congestionLevel", DoubleType(), True),
+    StructField("confidence", DoubleType(), True)
 ])
 
 weatherSchema = StructType([

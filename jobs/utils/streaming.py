@@ -1,6 +1,6 @@
 import logging
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import from_json, col
+from pyspark.sql.functions import from_json, col, to_timestamp
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
@@ -17,6 +17,7 @@ def read_kafka_topic(spark, topic, schema, kafka_bootstrap):
             .selectExpr("CAST(value AS STRING)")
             .select(from_json(col("value"), schema).alias("data"))
             .select("data.*")
+            .withColumn("timestamp", to_timestamp(col("timestamp")))
             .withWatermark("timestamp", "2 minutes")
     )
 

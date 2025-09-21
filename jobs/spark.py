@@ -14,6 +14,7 @@ def main():
                 "org.apache.hadoop:hadoop-aws:3.3.1,"
                 "com.amazonaws:aws-java-sdk-bundle:1.12.262") \
         .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \
+        .config("spark.hadoop.fs.s3a.endpoint", "s3.ap-southeast-2.amazonaws.com") \
         .config("spark.hadoop.fs.s3a.access.key", configuration["AWS_ACCESS_KEY"]) \
         .config("spark.hadoop.fs.s3a.secret.key", configuration["AWS_SECRET_KEY"]) \
         .config("spark.hadoop.fs.s3a.aws.credentials.provider",
@@ -22,7 +23,7 @@ def main():
 
     spark.sparkContext.setLogLevel("WARN")
 
-    # đọc dữ liệu từ Kafka
+    # đọc dữ liệu từ Kafka -> streaming (partition topics)
     vehicleDF = read_kafka_topic(spark, "vehicle_data", vehicleSchema, configuration["KAFKA_BOOTSTRAP_SERVERS"])
     gpsDF = read_kafka_topic(spark, "gps_data", gpsSchema, configuration["KAFKA_BOOTSTRAP_SERVERS"])
     trafficDF = read_kafka_topic(spark, "traffic_data", trafficSchema, configuration["KAFKA_BOOTSTRAP_SERVERS"])
