@@ -17,6 +17,9 @@ The pipeline streams data in real-time using **Kafka**, processes it with **Apac
 
 ## 🚀 Architecture
 
+![Architecture Diagram](https://github.com/DangVanVy23521825/CityDataProject/blob/main/architecture.png)
+
+
 ## Technologies Used
 
 - **IoT Devices**: For capturing real-time data.
